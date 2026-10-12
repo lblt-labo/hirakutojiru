@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ひらくとじる</title>
+<meta name="description" content="仮名交じり文の「漢字はなんだっけ？」を解決するアプリ">
+<meta name="theme-color" content="#1d3557">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ひらくとじる">
+<meta property="og:description" content="仮名交じり文の「漢字はなんだっけ？」を解決するアプリ">
+<meta property="og:image" content="./ogp.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ひらくとじる">
+<meta name="twitter:description" content="仮名交じり文の「漢字はなんだっけ？」を解決するアプリ">
+<meta name="twitter:image" content="./ogp.png">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<style>
+:root{
+  --paper:#eef2f7; --card:#ffffff; --ink:#18212b; --sub:#4a5866;
+  --navy:#1d3557; --blue:#0b5cad; --orange:#b45309; --orange-bg:#fff1dc; --line:#b9c4d0;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif;line-height:1.6;
+  padding-bottom:env(safe-area-inset-bottom,0)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+header{background:var(--navy);color:#fff;padding:calc(env(safe-area-inset-top,0px) + .6rem) 1rem .9rem}
+.bar{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;max-width:720px;margin:0 auto}
+h1{margin:0;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;font-size:1.9rem;letter-spacing:.12em;line-height:1.2}
+h1 span{display:inline-block;transition:transform .4s}
+.sub{margin:.2rem 0 0;font-size:.8rem;opacity:.92}
+.helpbtn{min-height:44px;min-width:44px;padding:.4rem .8rem;border:2px solid #fff;border-radius:22px;background:transparent;color:#fff;font-weight:700;white-space:nowrap}
+.helpbtn:active{background:#fff;color:var(--navy)}
+main{max-width:720px;margin:0 auto;padding:1rem}
+.search{display:flex;gap:.5rem}
+.search input{flex:1;min-width:0;min-height:52px;padding:.5rem .9rem;font-size:1.1rem;border:2px solid var(--navy);border-radius:12px;background:#fff}
+.mic{min-width:52px;min-height:52px;border:2px solid var(--navy);border-radius:12px;background:#fff;font-size:1.4rem}
+.mic[aria-pressed="true"]{background:var(--orange);border-color:var(--orange);color:#fff;animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.07)}}
+.status{min-height:1.6rem;margin:.4rem 0 0;font-size:.85rem;color:var(--sub)}
+.idx{display:flex;flex-wrap:wrap;gap:.4rem;margin:.6rem 0 1rem;padding:0;list-style:none}
+.idx button{min-width:44px;min-height:44px;padding:0 .5rem;border:2px solid var(--line);border-radius:10px;background:#fff;font-weight:700;font-size:1rem}
+.idx button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff;text-decoration:underline;text-underline-offset:4px}
+.idx button[aria-pressed="true"]::before{content:"✓ "}
+.count{margin:0 0 .6rem;font-size:.9rem;color:var(--sub)}
+.cards{display:grid;gap:.9rem}
+.card{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:1rem;animation:in .25s ease-out}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.open{display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap;color:var(--sub);font-size:.95rem}
+.tag{display:inline-block;padding:0 .5rem;border:1.5px solid currentColor;border-radius:6px;font-size:.75rem;font-weight:700}
+.open b{color:var(--ink);font-size:1.15rem;font-weight:700}
+.arrow{margin:.2rem 0;font-size:.85rem;color:var(--blue);font-weight:700}
+.kanji{margin:0;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;font-size:2.4rem;line-height:1.9;color:var(--navy);font-weight:700;word-break:keep-all}
+.kanji rt{font-size:.8rem;font-weight:400;color:var(--ink);letter-spacing:.05em}
+.why{margin:.4rem 0 0;padding:.6rem .8rem;background:var(--orange-bg);border-left:6px solid var(--orange);border-radius:6px;font-size:.92rem}
+.why strong{color:var(--orange)}
+.empty{padding:1.2rem;border:2px dashed var(--line);border-radius:14px;text-align:center;color:var(--sub)}
+.link{min-height:44px;margin-top:.6rem;padding:.3rem 1rem;border:2px solid var(--navy);border-radius:10px;background:#fff;font-weight:700}
+.overlay{position:fixed;inset:0;background:rgba(10,20,35,.6);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.overlay.on{display:flex}
+.sheet{background:#fff;width:100%;max-width:720px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:1.2rem 1.2rem calc(1.2rem + env(safe-area-inset-bottom,0px));animation:up .25s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.sheet h2{margin:0 0 .6rem;font-size:1.2rem}
+.sheet ol{padding-left:1.3rem;margin:.4rem 0 1rem}
+.sheet li{margin-bottom:.5rem}
+.toast{position:fixed;left:50%;bottom:calc(1.2rem + env(safe-area-inset-bottom,0px));transform:translate(-50%,200%);background:var(--navy);color:#fff;padding:.9rem 1.1rem;border-radius:14px;width:min(92vw,560px);z-index:40;display:flex;align-items:center;gap:.6rem;transition:transform .45s cubic-bezier(.2,.9,.3,1);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.toast.on{transform:translate(-50%,0)}
+.toast p{margin:0;flex:1;font-size:.9rem}
+.toast button{min-height:44px;min-width:44px;padding:0 .8rem;border:2px solid #fff;border-radius:10px;background:transparent;color:#fff;font-weight:700}
+.toast .go{background:#fff;color:var(--navy)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div>
+      <h1 id="title"><span>ひらく</span>と<span>じる</span></h1>
+      <p class="sub">仮名交じり文の「漢字はなんだっけ？」を解決するアプリ</p>
+    </div>
+    <button class="helpbtn" id="helpBtn" type="button" aria-haspopup="dialog">❓ 使い方・ヘルプ</button>
+  </div>
+</header>
+
+<main>
+  <div class="search" role="search">
+    <input id="q" type="search" inputmode="text" autocomplete="off" placeholder="例：しんぴょうせい／改ざん" aria-label="言葉を入力して検索">
+    <button class="mic" id="mic" type="button" aria-pressed="false" aria-label="音声で入力する">🎤</button>
+  </div>
+  <p class="status" id="status" role="status" aria-live="polite"></p>
+  <ul class="idx" id="idx" aria-label="五十音で絞り込み"></ul>
+  <p class="count" id="count"></p>
+  <div class="cards" id="cards"></div>
+</main>
+
+<footer style="text-align: center; font-size: 0.75rem; color: #888; margin-top: 3rem; padding: 1rem 0.5rem; line-height: 1.5;">
+  <p style="margin-bottom: 0.5rem;">【ご利用について】</p>
+  <p style="margin-bottom: 0.5rem;">本アプリの利用に伴うトラブルやデータ損失等について、開発者は一切の責任を負いかねます。</p>
+  <p style="margin-bottom: 0.5rem;">ご意見・不具合のご報告は X（<a href="https://x.com/lblt_labo" target="_blank" rel="noopener" style="color: #666; text-decoration: underline;">@lblt_labo</a>）までお願いいたします。</p>
+  <p style="margin-top: 0.5rem;"><a href="https://ofuse.me/lbltlabo/letter" target="_blank" rel="noopener noreferrer" style="color: #666; text-decoration: underline;">☕️ 開発者を応援する / メッセージを送る</a></p>
+</footer>
+
+<div class="overlay" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="sheet">
+    <h2 id="helpTitle">使い方</h2>
+    <ol>
+      <li>ニュースで見た言葉を、ひらがなのまま入力します。（例：しんぴょうせい）</li>
+      <li>🎤 を押して、声で言っても探せます。</li>
+      <li>「あ・か・さ…」を押すと、その行の言葉だけが出ます。もう一度押すと、すべてに戻ります。</li>
+      <li>カードには、漢字（ふりがな付き）と、ひらかれている理由が出ます。</li>
+    </ol>
+    <p>「ひらく」＝ひらがな交じりの表記、「とじる」＝漢字で書く表記です。新聞やテレビでは、常用漢字表にない字をひらがなに置きかえる決まりがあります。</p>
+    <button class="link" id="helpClose" type="button">とじる</button>
+  </div>
+</div>
+
+<div class="toast" id="install" role="dialog" aria-label="ホーム画面に追加">
+  <p id="installMsg">ホーム画面に追加してアプリとして使う</p>
+  <button class="go" id="installGo" type="button">追加</button>
+  <button id="installNo" type="button" aria-label="閉じる">✕</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // ---------- データ ----------
+  // r: 読み / m: 交じり表記 / k: [漢字, ルビ] の並び / w: 理由
+  var DATA = [
+    {r:'しんぴょうせい', m:'信ぴょう性', k:[['信','しん'],['憑','ひょう'],['性','せい']], w:'「憑」が常用漢字表にない字のため'},
+    {r:'かいざん', m:'改ざん', k:[['改','かい'],['竄','ざん']], w:'「竄」が常用漢字表にない字のため'},
+    {r:'ねつぞう', m:'ねつ造', k:[['捏','ねつ'],['造','ぞう']], w:'「捏」が常用漢字表にない字のため'},
+    {r:'あつれき', m:'あつれき', k:[['軋','あつ'],['轢','れき']], w:'「軋」「轢」が常用漢字表にない字のため'},
+    {r:'たんか', m:'たんか', k:[['担','たん'],['架','か']], w:'「架」が常用漢字表にない字のため（担架）'},
+    {r:'ろうえい', m:'漏えい', k:[['漏','ろう'],['洩','えい']], w:'「洩」が常用漢字表にない字のため'},
+    {r:'けんいん', m:'けん引', k:[['牽','けん'],['引','いん']], w:'「牽」が常用漢字表にない字のため'},
+    {r:'じゅうりん', m:'じゅうりん', k:[['蹂','じゅう'],['躙','りん']], w:'「蹂」「躙」が常用漢字表にない字のため'},
+    {r:'ちゅうちょ', m:'ちゅうちょ', k:[['躊','ちゅう'],['躇','ちょ']], w:'「躊」「躇」が常用漢字表にない字のため'},
+    {r:'ろうばい', m:'ろうばい', k:[['狼','ろう'],['狽','ばい']], w:'「狼」「狽」が常用漢字表にない字のため'},
+    {r:'ほうふつ', m:'ほうふつ', k:[['髣','ほう'],['髴','ふつ']], w:'「髣」「髴」が常用漢字表にない字のため'},
+    {r:'ばっこ', m:'ばっこ', k:[['跋','ばっ'],['扈','こ']], w:'「跋」「扈」が常用漢字表にない字のため'},
+    {r:'はんちゅう', m:'範ちゅう', k:[['範','はん'],['疇','ちゅう']], w:'「疇」が常用漢字表にない字のため'}
+  ];
+
+  var GYOU = [
+    ['あ','あいうえお'],['か','かきくけこ'],['さ','さしすせそ'],['た','たちつてと'],['な','なにぬねの'],
+    ['は','はひふへほ'],['ま','まみむめも'],['や','やゆよ'],['ら','らりるれろ'],['わ','わをん']
+  ];
+  var SMALL = {'ぁ':'あ','ぃ':'い','ぅ':'う','ぇ':'え','ぉ':'お','っ':'つ','ゃ':'や','ゅ':'ゆ','ょ':'よ','ゎ':'わ'};
+
+  function $(id){ return document.getElementById(id); }
+  function safe(fn, fb){ try { return fn(); } catch (e) { return fb; } }
+
+  function norm(s){
+    return safe(function(){
+      return String(s || '').normalize('NFKC').toLowerCase().replace(/\s+/g,'')
+        .replace(/[\u30a1-\u30f6]/g, function(c){ return String.fromCharCode(c.charCodeAt(0) - 0x60); });
+    }, '');
+  }
+  function gyouOf(reading){
+    return safe(function(){
+      var c = reading.charAt(0);
+      c = SMALL[c] || c;
+      c = c.normalize('NFD').charAt(0);
+      for (var i = 0; i < GYOU.length; i++) { if (GYOU[i][1].indexOf(c) >= 0) return GYOU[i][0]; }
+      return '';
+    }, '');
+  }
+  DATA.forEach(function(d){
+    d.kj = d.k.map(function(p){ return p[0]; }).join('');
+    d.keys = [norm(d.r), norm(d.m), norm(d.kj)];
+    d.g = gyouOf(d.r);
+  });
+
+  // ---------- 描画 ----------
+  var qEl = $('q'), cardsEl = $('cards'), countEl = $('count'), idxEl = $('idx'), statusEl = $('status');
+  var curGyou = '';
+
+  function el(tag, cls, text){
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function buildIndex(){
+    if (!idxEl) return;
+    var all = [['', 'すべて']].concat(GYOU.map(function(g){ return [g[0], g[0] + '行']; }));
+    all.forEach(function(g){
+      var li = el('li');
+      var b = el('button', null, g[1]);
+      b.type = 'button';
+      b.setAttribute('data-g', g[0]);
+      b.setAttribute('aria-pressed', g[0] === curGyou ? 'true' : 'false');
+      b.addEventListener('click', function(){
+        curGyou = (curGyou === g[0]) ? '' : g[0];
+        refreshIndex(); render();
+      });
+      li.appendChild(b); idxEl.appendChild(li);
+    });
+  }
+  function refreshIndex(){
+    if (!idxEl) return;
+    var bs = idxEl.querySelectorAll('button');
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].setAttribute('aria-pressed', bs[i].getAttribute('data-g') === curGyou ? 'true' : 'false');
+    }
+  }
+
+  function makeCard(d){
+    var c = el('article', 'card');
+    var o = el('div', 'open');
+    o.appendChild(el('span', 'tag', 'ひらく'));
+    o.appendChild(el('b', null, d.m));
+    o.appendChild(el('span', null, '（' + d.r + '）'));
+    c.appendChild(o);
+    c.appendChild(el('div', 'arrow', '▼ 漢字で書くと'));
+    var k = el('p', 'kanji');
+    d.k.forEach(function(p){
+      var ru = document.createElement('ruby');
+      ru.appendChild(document.createTextNode(p[0]));
+      var rp1 = el('rp', null, '('); var rt = el('rt', null, p[1]); var rp2 = el('rp', null, ')');
+      ru.appendChild(rp1); ru.appendChild(rt); ru.appendChild(rp2);
+      k.appendChild(ru);
+    });
+    c.appendChild(k);
+    var w = el('p', 'why');
+    w.appendChild(el('strong', null, 'ひらく理由：'));
+    w.appendChild(document.createTextNode(d.w));
+    c.appendChild(w);
+    return c;
+  }
+
+  function render(){
+    if (!cardsEl) return;
+    var q = norm(qEl ? qEl.value : '');
+    var list = DATA.filter(function(d){
+      if (curGyou && d.g !== curGyou) return false;
+      if (!q) return true;
+      return d.keys.some(function(k){ return k.indexOf(q) >= 0; });
+    });
+    cardsEl.textContent = '';
+    if (countEl) countEl.textContent = list.length + '件の言葉';
+    if (!list.length) {
+      var e = el('div', 'empty', '見つかりませんでした。ひらがなで入力するか、「すべて」を押して探してみてください。');
+      cardsEl.appendChild(e);
+      return;
+    }
+    list.forEach(function(d){ cardsEl.appendChild(makeCard(d)); });
+  }
+
+  if (qEl) qEl.addEventListener('input', render);
+  buildIndex(); render();
+
+  // ---------- 音声入力 ----------
+  var mic = $('mic'), rec = null, listening = false;
+  function setStatus(t){ if (statusEl) statusEl.textContent = t || ''; }
+  if (mic) {
+    mic.addEventListener('click', function(){
+      try {
+        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { setStatus('この端末では音声入力が使えません。文字で入力してください。'); return; }
+        if (listening && rec) { rec.stop(); return; }
+        rec = new SR();
+        rec.lang = 'ja-JP'; rec.interimResults = false; rec.maxAlternatives = 1;
+        rec.onstart = function(){ listening = true; mic.setAttribute('aria-pressed','true'); setStatus('🎤 聞いています… 言葉を話してください'); };
+        rec.onresult = function(ev){
+          safe(function(){
+            var t = ev.results[0][0].transcript.replace(/[。、．，.,\s]/g,'');
+            if (qEl) { qEl.value = t; render(); }
+            setStatus('「' + t + '」で探しました');
+          });
+        };
+        rec.onerror = function(ev){
+          var m = (ev && ev.error === 'not-allowed') ? 'マイクの使用が許可されていません。設定を確認してください。' : '聞き取れませんでした。もう一度お試しください。';
+          setStatus(m);
+        };
+        rec.onend = function(){ listening = false; mic.setAttribute('aria-pressed','false'); };
+        rec.start();
+      } catch (e) {
+        listening = false; mic.setAttribute('aria-pressed','false');
+        setStatus('音声入力を始められませんでした。文字で入力してください。');
+      }
+    });
+  }
+
+  // ---------- ヘルプ ----------
+  var help = $('help');
+  function toggleHelp(on){
+    if (!help) return;
+    help.classList.toggle('on', on);
+    if (on) { var b = $('helpClose'); if (b) b.focus(); } else { var h = $('helpBtn'); if (h) h.focus(); }
+  }
+  if ($('helpBtn')) $('helpBtn').addEventListener('click', function(){ toggleHelp(true); });
+  if ($('helpClose')) $('helpClose').addEventListener('click', function(){ toggleHelp(false); });
+  if (help) help.addEventListener('click', function(ev){ if (ev.target === help) toggleHelp(false); });
+  document.addEventListener('keydown', function(ev){ if (ev.key === 'Escape') toggleHelp(false); });
+
+  // ---------- ホーム画面に追加案内 ----------
+  var KEY = 'hirakutojiru_install_dismissed';
+  var toast = $('install'), deferred = null;
+  function dismissed(){ return safe(function(){ return localStorage.getItem(KEY) === '1'; }, false); }
+  function remember(){ safe(function(){ localStorage.setItem(KEY, '1'); }); }
+  function showToast(){ if (toast && !dismissed()) setTimeout(function(){ toast.classList.add('on'); }, 800); }
+  function hideToast(){ if (toast) toast.classList.remove('on'); remember(); }
+  var standalone = safe(function(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone; }, false);
+
+  window.addEventListener('beforeinstallprompt', function(ev){
+    safe(function(){
+      ev.preventDefault(); deferred = ev;
+      var g = $('installGo'); if (g) g.style.display = '';
+      showToast();
+    });
+  });
+  window.addEventListener('appinstalled', function(){ hideToast(); });
+  if ($('installGo')) $('installGo').addEventListener('click', function(){
+    safe(function(){
+      if (deferred) { deferred.prompt(); deferred = null; }
+      hideToast();
+    });
+  });
+  if ($('installNo')) $('installNo').addEventListener('click', hideToast);
+  // iPhone等（beforeinstallprompt が来ない端末）向けの案内
+  safe(function(){
+    var ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (ios && !standalone && !dismissed()) {
+      var m = $('installMsg'), g = $('installGo');
+      if (m) m.textContent = '共有ボタンから「ホーム画面に追加」を選ぶと、アプリとして使えます';
+      if (g) g.style.display = 'none';
+      showToast();
+    }
+  });
+
+  // ---------- Service Worker ----------
+  safe(function(){
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(function(){});
+    }
+  });
+});
+</script>
+</body>
+</html>
